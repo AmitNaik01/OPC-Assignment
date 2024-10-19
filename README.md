@@ -86,3 +86,8 @@ Validating Data Consistency with OPC Client
 Screenshots
 
 Include screenshots of the SCADA HMI UI below:
+![image](https://github.com/user-attachments/assets/207e9f00-a9a3-4e4d-a739-7ceaed11ffce)
+
+![image](https://github.com/user-attachments/assets/98717110-9cec-4d61-a5c8-23a7cf0b362b)
+
+
