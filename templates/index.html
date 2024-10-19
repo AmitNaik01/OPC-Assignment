@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCADA HMI Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .card-title {
+            color: #17a2b8;
+        }
+        .metric {
+            font-size: 2rem;
+            color: #495057;
+        }
+        #dashboard-panel {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 30px;
+        }
+        canvas {
+            max-height: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center text-info">SCADA HMI - Life Sciences Process Data</h1>
+        
+        <div id="dashboard-panel">
+            <div class="card text-center" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Temperature</h5>
+                    <p class="metric" id="temperature">Loading...</p>
+                    <p>°C</p>
+                </div>
+            </div>
+
+            <div class="card text-center" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Pressure</h5>
+                    <p class="metric" id="pressure">Loading...</p>
+                    <p>Pa</p>
+                </div>
+            </div>
+
+            <div class="card text-center" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Humidity</h5>
+                    <p class="metric" id="humidity">Loading...</p>
+                    <p>%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <h5 class="text-center">Temperature Graph</h5>
+                <canvas id="temperatureChart"></canvas>
+            </div>
+            <div class="col-md-4">
+                <h5 class="text-center">Pressure Graph</h5>
+                <canvas id="pressureChart"></canvas>
+            </div>
+            <div class="col-md-4">
+                <h5 class="text-center">Humidity Graph</h5>
+                <canvas id="humidityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables to store graph data
+        let tempData = [], pressureData = [], humidityData = [];
+        let labels = [];
+
+        // Charts
+        const temperatureCtx = document.getElementById('temperatureChart').getContext('2d');
+        const pressureCtx = document.getElementById('pressureChart').getContext('2d');
+        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+
+        const temperatureChart = new Chart(temperatureCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: tempData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+        const pressureChart = new Chart(pressureCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pressure (Pa)',
+                    data: pressureData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+        const humidityChart = new Chart(humidityCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Humidity (%)',
+                    data: humidityData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+        // Function to fetch process data and update the UI
+        function fetchProcessData() {
+            $.get("/api/process-data", function(data) {
+                const now = new Date().toLocaleTimeString();
+
+                // Update dashboard metrics
+                $("#temperature").text(data.temperature);
+                $("#pressure").text(data.pressure);
+                $("#humidity").text(data.humidity);
+
+                // Update labels
+                labels.push(now);
+                if (labels.length > 10) labels.shift(); // Keep last 10 timestamps
+
+                // Update chart data
+                tempData.push(data.temperature);
+                pressureData.push(data.pressure);
+                humidityData.push(data.humidity);
+
+                if (tempData.length > 10) tempData.shift();
+                if (pressureData.length > 10) pressureData.shift();
+                if (humidityData.length > 10) humidityData.shift();
+
+                // Update charts
+                temperatureChart.update();
+                pressureChart.update();
+                humidityChart.update();
+            });
+        }
+
+        // Fetch process data every 5 seconds
+        setInterval(fetchProcessData, 5000);
+
+        // Initial call to fetch process data
+        fetchProcessData();
+    </script>
+</body>
+</html>
